@@ -145,7 +145,7 @@ window.Quarto = {
 <section id="activity-1-mcmc-by-hand-with-metropolis-algorithm-simple-linear-regression" class="level2">
 <h2 class="anchored" data-anchor-id="activity-1-mcmc-by-hand-with-metropolis-algorithm-simple-linear-regression">Activity 1 — MCMC “by hand” with Metropolis algorithm (simple linear regression)</h2>
 <blockquote class="blockquote">
-<p>Goal: Plot the two scaled densities and the optimal criterion; check that <span class="math inline">\(c\)</span> is at the cross-over point of hte probability density functions.</p>
+<p>Goal: Implement a bare-bones Metropolis sampler for a straight-line model on one participant from <code>sleepstudy</code>. Inspect priors, define the log-likelihood and (unnormalized) log-posterior, write a simple random-walk proposal, run the chain, and compare to least-squares.</p>
 </blockquote>
 <section id="setup" class="level4">
 <h4 class="anchored" data-anchor-id="setup">Setup</h4>
@@ -356,7 +356,7 @@ window.Quarto = {
 <span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(slope_samples)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 21.83715</code></pre>
+<pre><code>[1] 20.93165</code></pre>
 </div>
 <details open="" class="code-fold">
 <summary>Code</summary>
@@ -367,7 +367,7 @@ window.Quarto = {
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code> 2.5% 97.5% 
-10.31 33.46 </code></pre>
+ 9.39 31.39 </code></pre>
 </div>
 </div>
 </section>
@@ -1689,7 +1689,7 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 <span id="cb61-22"><a href="#cb61-22" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb61-23"><a href="#cb61-23" aria-hidden="true" tabindex="-1"></a><span class="fu">## Activity 1 — MCMC "by hand" with Metropolis algorithm (simple linear regression)</span></span>
 <span id="cb61-24"><a href="#cb61-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb61-25"><a href="#cb61-25" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; Goal: Plot the two scaled densities and the optimal criterion; check that $c$ is at the cross-over point of hte probability density functions.</span></span>
+<span id="cb61-25"><a href="#cb61-25" aria-hidden="true" tabindex="-1"></a><span class="at">&gt; Goal: Implement a bare-bones Metropolis sampler for a straight-line model on one participant from </span><span class="in">`sleepstudy`</span><span class="at">. Inspect priors, define the log-likelihood and (unnormalized) log-posterior, write a simple random-walk proposal, run the chain, and compare to least-squares.</span></span>
 <span id="cb61-26"><a href="#cb61-26" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb61-27"><a href="#cb61-27" aria-hidden="true" tabindex="-1"></a><span class="fu">#### Setup</span></span>
 <span id="cb61-28"><a href="#cb61-28" aria-hidden="true" tabindex="-1"></a></span>

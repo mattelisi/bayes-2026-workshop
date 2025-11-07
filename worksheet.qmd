@@ -22,7 +22,7 @@ library(lme4)
 
 ## Activity 1 — MCMC "by hand" with Metropolis algorithm (simple linear regression)
 
-> Goal: Plot the two scaled densities and the optimal criterion; check that $c$ is at the cross-over point of hte probability density functions.
+> Goal: Implement a bare-bones Metropolis sampler for a straight-line model on one participant from `sleepstudy`. Inspect priors, define the log-likelihood and (unnormalized) log-posterior, write a simple random-walk proposal, run the chain, and compare to least-squares.
 
 #### Setup
 

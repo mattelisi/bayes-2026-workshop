@@ -560,24 +560,32 @@ Matteo Lisi
 <section id="metropolis-example" class="slide level2 inverse" data-background-color="#202A30" data-transition="slide">
 <h2>Metropolis example</h2>
 <p>&nbsp;</p>
+<div>
 <p>Say you want to sample from a probability distribution <span class="math inline">\(p({\bf x})\)</span> (e.g.&nbsp;the posterior), but you can only evaluate a function <span class="math inline">\(f({\bf x})\)</span> that is proportional to the density <span class="math inline">\(p({\bf x})\)</span> (e.g.&nbsp;the product of prior and likelihood).</p>
+<div class="fragment">
 <ul>
-<li class="fragment"><p><strong>Initialization</strong>:</p>
+<li><p><strong>Initialization</strong>:</p>
 <ol type="1">
-<li class="fragment"><p>choose arbitrary starting point <span class="math inline">\({\bf x}_0\)</span></p></li>
-<li class="fragment"><p>choose a probability distribution to generate proposals <span class="math inline">\(g({\bf x}_{n+1}|{\bf x}_n)\)</span> (<em>proposal density</em>)</p></li>
+<li><p>choose arbitrary starting point <span class="math inline">\({\bf x}_0\)</span></p></li>
+<li><p>choose a probability distribution to generate proposals <span class="math inline">\(g({\bf x}_{n+1}|{\bf x}_n)\)</span> (<span style="color:#EB641E"><em>proposal density</em></span>)</p></li>
 </ol></li>
-<li class="fragment"><p><strong>For each iteration <span class="math inline">\(i\)</span></strong>:</p>
+</ul>
+</div>
+<div class="fragment">
+<ul>
+<li><p><strong>For each iteration <span class="math inline">\(i\)</span></strong>:</p>
 <ol type="1">
-<li class="fragment"><p>generate a candidate <span class="math inline">\({\bf x'}\)</span> sampling from <span class="math inline">\(g({\bf x}_{i+1}|{\bf x}_{i})\)</span></p></li>
-<li class="fragment"><p>calculate the .purple[acceptance ratio] <span class="math inline">\(a = \frac{f({\bf x}')}{f({\bf x}_{i})}\)</span></p></li>
-<li class="fragment"><p>.purple[accept/reject]: generate a uniform number <span class="math inline">\(u\)</span> in <span class="math inline">\([0,1]\)</span></p></li>
+<li><p>generate a candidate <span class="math inline">\({\bf x'}\)</span> sampling from <span class="math inline">\(g({\bf x}_{i+1}|{\bf x}_{i})\)</span></p></li>
+<li><p>calculate the <span style="color:#EB641E">acceptance ratio</span> <span class="math inline">\(a = \frac{f({\bf x}')}{f({\bf x}_{i})}\)</span></p></li>
+<li><p><span style="color:#EB641E">accept/reject</span>: generate a uniform number <span class="math inline">\(u\)</span> in <span class="math inline">\([0,1]\)</span></p></li>
 </ol>
 <ul>
-<li class="fragment"><p>if <span class="math inline">\(u \le a\)</span>, accept and set <span class="math inline">\({\bf x}_{i+1}={\bf x'}\)</span> (<em>“move to the new value”</em>)</p></li>
-<li class="fragment"><p>if <span class="math inline">\(u &gt; a\)</span>, reject and set <span class="math inline">\({\bf x}_{i+1}={\bf x}_{i}\)</span> (<em>“stay where you are”</em>)</p></li>
+<li><p>if <span class="math inline">\(u \le a\)</span>, accept and set <span class="math inline">\({\bf x}_{i+1}={\bf x'}\)</span> (<em>“move to the new value”</em>)</p></li>
+<li><p>if <span class="math inline">\(u &gt; a\)</span>, reject and set <span class="math inline">\({\bf x}_{i+1}={\bf x}_{i}\)</span> (<em>“stay where you are”</em>)</p></li>
 </ul></li>
 </ul>
+</div>
+</div>
 </section>
 <section id="metropolis-example-1" class="slide level2 inverse" data-background-color="#202A30" data-transition="slide">
 <h2>Metropolis example</h2>
@@ -649,7 +657,7 @@ Matteo Lisi
 <span id="cb2-6"><a href="" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div style="font-size: 55%;">
-<p>Note: logarithm transform a product into a sum: <span class="math inline">\(\log(x \times y) = \log(x) + \log(y)\)</span></p>
+<p>Note: logarithm transform a product into a sum: <span class="math inline">\(\log(x \times y) = \log(x) + \log(y)\)</span>, allowing to compute the joint probability of independent events as a sum of log-probabilities.</p>
 </div>
 <p>&nbsp; &nbsp; &nbsp;</p>
 <div class="fragment">
