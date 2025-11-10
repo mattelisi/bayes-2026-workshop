@@ -167,8 +167,12 @@ par_dark_slide <- function(
 ::: {.incremental}
 1. How to fit a model to data: frequentist & Bayesian approaches
 2. Computations in Bayesian inference & MCMC sampling
-3. Examples
-4. Bayes factors
+3. Examples:
+  - Linear regression
+  - Overdispersed Poisson GLMM
+  - Lapse-augmented probit GLMM.
+5. Priors
+5. Bayes factors
 :::
 
 ---
@@ -1127,6 +1131,149 @@ where:
 
 Hence, the log-rate is: $\log(\lambda_{ep}) = \alpha_e + \beta_p + \epsilon_{ep}$, and we multiply $\lambda_{ep}$ by the offset $\text{past.arrests}_{ep} \times \tfrac{15}{12}$.
 
+
+## Example 3: Lapse-augmented probit GLMM
+ 
+
+:::: nonincremental
+
+- Dataset from a [**psychophysics** experiment](https://www.pnas.org/cgi/doi/10.1073/pnas.1901963116) measuring how well people make fine spatial judgements.
+
+- On each trial, two brief (250 ms) peripheral dots appeared; observers pressed Left/Right to report **which dot was farther from fixation**.
+
+- Two viewing conditions varied the dots’ **blur/size & luminance**. **Question:** how does **precision** (steepness of the choice curve) change across conditions?
+
+```{r}
+d <- read.table("data/bisection2.txt", sep="\t",header=T)
+str(d)
+```
+
+::::
+
+## Example 3: Lapse-augmented probit GLMM
+  
+  
+
+
+```{r}
+#| echo: FALSE
+#| fig-height: 4
+#| fig-width: 11
+#| fig-align: center
+
+binomSEM <- function (v) {
+    sqrt((mean(v) * (1 - mean(v)))/length(v))}
+
+d$dx_bin <- cut(d$dx, 15)
+dag <- aggregate(cbind(rr,dx)~id+dx_bin+cond, d, mean)
+dag$se <- aggregate(rr~id+dx_bin+cond, d, binomSEM)$rr
+dag$n <- aggregate(rr~id+dx_bin+cond, d, length)$rr
+
+ggplot(dag, aes(x=dx,y=rr,color=factor(cond)))+geom_errorbar(aes(ymin=rr-se,ymax=rr+se),width=0)+geom_point(pch=21)+facet_wrap(~id,ncol=7)+nice_theme+geom_smooth(data=d,aes(x=dx,y=rr),method="glm",method.args=list(family=binomial(probit)),size=0.8,fullrange=T,se=F)+scale_color_manual(values=c("black","blue"),guide=F)+labs(y="choice probability", x="distance offset [deg]")
+
+```
+
+
+## Example 3: Lapse-augmented probit GLMM
+  
+
+The model at its core is a generalized linear multilevel (GLMM) Probit $$
+ P \left(y \mid b\right)  = \Phi \left( \textbf{X} \beta + \textbf{Z} b \right) \\
+b \sim \mathcal{N}\left( 0, \Omega \right)
+$$
+  
+
+::: fragment
+
+Human observers have imperfect attention, and can sometime press the wrong button my mistake, which can introduce substantial bias in the estimates. To account for this, we extend the model by formulating it as a mixture with a mixture weight $\lambda$
+
+$$P \left(y \mid b\right)  = \frac{1}{2}\lambda \;+ (1 - \lambda) \; \Phi \left( \textbf{X} \beta + \textbf{Z} b \right)$$
+:::
+
+
+## Example 3: Lapse-augmented probit GLMM
+  
+
+
+$\lambda$ is the probability that a participant produce a random response, and should be allowed to vary across participants.
+
+ 
+
+::: fragment
+
+We can set $\lambda \sim \text{Beta}(1,7)$ as a prior 
+
+
+```{r}
+#| echo: FALSE
+#| fig-height: 3
+#| fig-width: 4
+#| fig-align: center
+
+x <- seq(0, 1, length.out=500)
+plot(x, dbeta(x, 1,7), type="l", col="blue", lwd=2)
+
+
+```
+
+:::
+
+::: fragment
+
+
+```{r}
+pbeta(0.1, 1, 7)
+```
+
+:::
+
+
+## Example 3: Lapse-augmented probit GLMM {.scrollable}
+
+```{.stan}
+data {
+  int<lower=1> N;
+  array[N] int<lower=0, upper=1> rr;
+  array[N] real ds;
+  array[N] int<lower=0,upper=1> cond;
+  int<lower=1> J;
+  array[N] int<lower=1,upper=J> id;
+}
+
+parameters {
+  vector[4] beta;                    // fixed-effects parameters
+  vector<lower=0,upper=1>[J] lambda; // lapse rate
+  vector<lower=0>[4] sigma_u;        // random effects standard deviations
+  cholesky_factor_corr[4] L_u;       // L_u is the Choleski factor of the correlation matrix
+  matrix[4,J] z_u;                   // random effect matrix
+}
+
+transformed parameters {
+  matrix[4,J] u;
+  u = diag_pre_multiply(sigma_u, L_u) * z_u; // use Cholesky to set correlation
+}
+
+model {
+  real mu; // linear predictor
+
+  //priors
+  L_u ~ lkj_corr_cholesky(2);   // LKJ prior for the correlation matrix
+  to_vector(z_u) ~ normal(0,1); // before Cholesky, random effects are normal variates with SD=1
+  sigma_u ~ cauchy(0, 1);       // SD of random effects (vectorized)
+  beta ~ normal(0, 2);          // prior 
+  lambda ~ beta(1, 7);          // lapse rate ~50% prior that <0.1, pbeta(0.1, 1, 7)
+
+  //likelihood
+  for (i in 1:N){
+    
+    mu = beta[1] + u[1,id[i]] + 
+      cond[i]*(beta[2]+u[2,id[i]]) + 
+      (beta[3] + u[3,id[i]] + cond[i]*(beta[4] + u[4,id[i]] ))*ds[i];
+    
+    rr[i] ~ bernoulli((1-lambda[id[i]])*Phi(mu)+lambda[id[i]]/2);
+  }
+}
+```
 
 
 ## Priors

@@ -431,7 +431,15 @@ Matteo Lisi
 <ol type="1">
 <li class="fragment">How to fit a model to data: frequentist &amp; Bayesian approaches</li>
 <li class="fragment">Computations in Bayesian inference &amp; MCMC sampling</li>
-<li class="fragment">Examples</li>
+<li class="fragment">Examples:</li>
+</ol>
+<ul>
+<li class="fragment">Linear regression</li>
+<li class="fragment">Overdispersed Poisson GLMM</li>
+<li class="fragment">Lapse-augmented probit GLMM.</li>
+</ul>
+<ol start="5" type="1">
+<li class="fragment">Priors</li>
 <li class="fragment">Bayes factors</li>
 </ol>
 </div>
@@ -1186,6 +1194,125 @@ y_i \sim \text{Poisson} \left(\lambda_i \right)
 <p>&nbsp;&nbsp;</p>
 <p>Hence, the log-rate is: <span class="math inline">\(\log(\lambda_{ep}) = \alpha_e + \beta_p + \epsilon_{ep}\)</span>, and we multiply <span class="math inline">\(\lambda_{ep}\)</span> by the offset <span class="math inline">\(\text{past.arrests}_{ep} \times \tfrac{15}{12}\)</span>.</p>
 </section>
+<section id="example-3-lapse-augmented-probit-glmm" class="slide level2">
+<h2>Example 3: Lapse-augmented probit GLMM</h2>
+<p>&nbsp;</p>
+<div>
+<ul>
+<li><p>Dataset from a <a href="https://www.pnas.org/cgi/doi/10.1073/pnas.1901963116"><strong>psychophysics</strong> experiment</a> measuring how well people make fine spatial judgements.</p></li>
+<li><p>On each trial, two brief (250 ms) peripheral dots appeared; observers pressed Left/Right to report <strong>which dot was farther from fixation</strong>.</p></li>
+<li><p>Two viewing conditions varied the dots’ <strong>blur/size &amp; luminance</strong>. <strong>Question:</strong> how does <strong>precision</strong> (steepness of the choice curve) change across conditions?</p></li>
+</ul>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="st">"data/bisection2.txt"</span>, <span class="at">sep=</span><span class="st">"</span><span class="sc">\t</span><span class="st">"</span>,<span class="at">header=</span>T)</span>
+<span id="cb32-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>'data.frame':   4593 obs. of  5 variables:
+ $ id  : int  4 4 4 4 4 4 4 4 4 4 ...
+ $ dx  : num  0.04 -0.04 -0.53 -0.53 -0.36 0.44 0.53 0.69 0.93 -1.09 ...
+ $ rr  : int  1 1 0 1 0 1 0 1 0 0 ...
+ $ acc : int  1 0 1 0 1 1 0 1 0 1 ...
+ $ cond: int  1 2 1 2 2 1 2 2 2 2 ...</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="example-3-lapse-augmented-probit-glmm-1" class="slide level2">
+<h2>Example 3: Lapse-augmented probit GLMM</h2>
+<p>&nbsp;&nbsp; &nbsp;&nbsp;</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="slides_files/figure-revealjs/unnamed-chunk-32-1.png" class="quarto-figure quarto-figure-center" width="1056"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="example-3-lapse-augmented-probit-glmm-2" class="slide level2">
+<h2>Example 3: Lapse-augmented probit GLMM</h2>
+<p>&nbsp;&nbsp;</p>
+<p>The model at its core is a generalized linear multilevel (GLMM) Probit <span class="math display">\[
+P \left(y \mid b\right)  = \Phi \left( \textbf{X} \beta + \textbf{Z} b \right) \\
+b \sim \mathcal{N}\left( 0, \Omega \right)
+\]</span> &nbsp;&nbsp;</p>
+<div class="fragment">
+<p>Human observers have imperfect attention, and can sometime press the wrong button my mistake, which can introduce substantial bias in the estimates. To account for this, we extend the model by formulating it as a mixture with a mixture weight <span class="math inline">\(\lambda\)</span></p>
+<p><span class="math display">\[P \left(y \mid b\right)  = \frac{1}{2}\lambda \;+ (1 - \lambda) \; \Phi \left( \textbf{X} \beta + \textbf{Z} b \right)\]</span></p>
+</div>
+</section>
+<section id="example-3-lapse-augmented-probit-glmm-3" class="slide level2">
+<h2>Example 3: Lapse-augmented probit GLMM</h2>
+<p>&nbsp;&nbsp;</p>
+<p><span class="math inline">\(\lambda\)</span> is the probability that a participant produce a random response, and should be allowed to vary across participants.</p>
+<p>&nbsp;</p>
+<div class="fragment">
+<p>We can set <span class="math inline">\(\lambda \sim \text{Beta}(1,7)\)</span> as a prior</p>
+<div class="cell" data-layout-align="center">
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure>
+<p><img data-src="slides_files/figure-revealjs/unnamed-chunk-33-1.png" class="quarto-figure quarto-figure-center" width="384"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<div class="fragment">
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">pbeta</span>(<span class="fl">0.1</span>, <span class="dv">1</span>, <span class="dv">7</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 0.5217031</code></pre>
+</div>
+</div>
+</div>
+</section>
+<section id="example-3-lapse-augmented-probit-glmm-4" class="slide level2 scrollable">
+<h2>Example 3: Lapse-augmented probit GLMM</h2>
+<div class="sourceCode" id="cb36"><pre class="sourceCode stan code-with-copy"><code class="sourceCode stan"><span id="cb36-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> {</span>
+<span id="cb36-2"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span>&lt;<span class="kw">lower</span>=<span class="dv">1</span>&gt; N;</span>
+<span id="cb36-3"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">array</span>[N] <span class="dt">int</span>&lt;<span class="kw">lower</span>=<span class="dv">0</span>, <span class="kw">upper</span>=<span class="dv">1</span>&gt; rr;</span>
+<span id="cb36-4"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">array</span>[N] <span class="dt">real</span> ds;</span>
+<span id="cb36-5"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">array</span>[N] <span class="dt">int</span>&lt;<span class="kw">lower</span>=<span class="dv">0</span>,<span class="kw">upper</span>=<span class="dv">1</span>&gt; cond;</span>
+<span id="cb36-6"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span>&lt;<span class="kw">lower</span>=<span class="dv">1</span>&gt; J;</span>
+<span id="cb36-7"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">array</span>[N] <span class="dt">int</span>&lt;<span class="kw">lower</span>=<span class="dv">1</span>,<span class="kw">upper</span>=J&gt; id;</span>
+<span id="cb36-8"><a href="" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb36-9"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-10"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">parameters</span> {</span>
+<span id="cb36-11"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">vector</span>[<span class="dv">4</span>] beta;                    <span class="co">// fixed-effects parameters</span></span>
+<span id="cb36-12"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">vector</span>&lt;<span class="kw">lower</span>=<span class="dv">0</span>,<span class="kw">upper</span>=<span class="dv">1</span>&gt;[J] lambda; <span class="co">// lapse rate</span></span>
+<span id="cb36-13"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">vector</span>&lt;<span class="kw">lower</span>=<span class="dv">0</span>&gt;[<span class="dv">4</span>] sigma_u;        <span class="co">// random effects standard deviations</span></span>
+<span id="cb36-14"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">cholesky_factor_corr</span>[<span class="dv">4</span>] L_u;       <span class="co">// L_u is the Choleski factor of the correlation matrix</span></span>
+<span id="cb36-15"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">matrix</span>[<span class="dv">4</span>,J] z_u;                   <span class="co">// random effect matrix</span></span>
+<span id="cb36-16"><a href="" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb36-17"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-18"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">transformed parameters</span> {</span>
+<span id="cb36-19"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">matrix</span>[<span class="dv">4</span>,J] u;</span>
+<span id="cb36-20"><a href="" aria-hidden="true" tabindex="-1"></a>  u = diag_pre_multiply(sigma_u, L_u) * z_u; <span class="co">// use Cholesky to set correlation</span></span>
+<span id="cb36-21"><a href="" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb36-22"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-23"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">model</span> {</span>
+<span id="cb36-24"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">real</span> mu; <span class="co">// linear predictor</span></span>
+<span id="cb36-25"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-26"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="co">//priors</span></span>
+<span id="cb36-27"><a href="" aria-hidden="true" tabindex="-1"></a>  L_u ~ lkj_corr_cholesky(<span class="dv">2</span>);   <span class="co">// LKJ prior for the correlation matrix</span></span>
+<span id="cb36-28"><a href="" aria-hidden="true" tabindex="-1"></a>  to_vector(z_u) ~ normal(<span class="dv">0</span>,<span class="dv">1</span>); <span class="co">// before Cholesky, random effects are normal variates with SD=1</span></span>
+<span id="cb36-29"><a href="" aria-hidden="true" tabindex="-1"></a>  sigma_u ~ cauchy(<span class="dv">0</span>, <span class="dv">1</span>);       <span class="co">// SD of random effects (vectorized)</span></span>
+<span id="cb36-30"><a href="" aria-hidden="true" tabindex="-1"></a>  beta ~ normal(<span class="dv">0</span>, <span class="dv">2</span>);          <span class="co">// prior </span></span>
+<span id="cb36-31"><a href="" aria-hidden="true" tabindex="-1"></a>  lambda ~ beta(<span class="dv">1</span>, <span class="dv">7</span>);          <span class="co">// lapse rate ~50% prior that &lt;0.1, pbeta(0.1, 1, 7)</span></span>
+<span id="cb36-32"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-33"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="co">//likelihood</span></span>
+<span id="cb36-34"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span>:N){</span>
+<span id="cb36-35"><a href="" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb36-36"><a href="" aria-hidden="true" tabindex="-1"></a>    mu = beta[<span class="dv">1</span>] + u[<span class="dv">1</span>,id[i]] + </span>
+<span id="cb36-37"><a href="" aria-hidden="true" tabindex="-1"></a>      cond[i]*(beta[<span class="dv">2</span>]+u[<span class="dv">2</span>,id[i]]) + </span>
+<span id="cb36-38"><a href="" aria-hidden="true" tabindex="-1"></a>      (beta[<span class="dv">3</span>] + u[<span class="dv">3</span>,id[i]] + cond[i]*(beta[<span class="dv">4</span>] + u[<span class="dv">4</span>,id[i]] ))*ds[i];</span>
+<span id="cb36-39"><a href="" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb36-40"><a href="" aria-hidden="true" tabindex="-1"></a>    rr[i] ~ bernoulli((<span class="dv">1</span>-lambda[id[i]])*Phi(mu)+lambda[id[i]]/<span class="dv">2</span>);</span>
+<span id="cb36-41"><a href="" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb36-42"><a href="" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</section>
 <section id="priors" class="slide level2">
 <h2>Priors</h2>
 <ul>
@@ -1237,7 +1364,7 @@ y_i \sim \text{Poisson} \left(\lambda_i \right)
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
-<p><img data-src="slides_files/figure-revealjs/unnamed-chunk-32-1.svg" class="quarto-figure quarto-figure-center" style="width:70.0%"></p>
+<p><img data-src="slides_files/figure-revealjs/unnamed-chunk-36-1.svg" class="quarto-figure quarto-figure-center" style="width:70.0%"></p>
 </figure>
 </div>
 </div>

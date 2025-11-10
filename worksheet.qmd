@@ -964,6 +964,197 @@ ppc_totals_sum %>%
   theme_minimal()
 ```
 
+## Activity 4 —  Lapse-augmented probit GLMM
 
+> Goal: Model binary perceptual choices (left/right) as a function of signed distance, allowing precision and bias to vary across conditions and observers, and incorporating an observer-specific lapse rate to capture random guessing.
+
+#### Setup
+
+Load data into R
+
+```{r}
+d <- read.table("data/bisection2.txt", sep="\t",header=T)
+str(d)
+```
+
+#### Visualisation
+
+
+```{r}
+#| echo: FALSE
+#| fig-height: 4
+#| fig-width: 11
+#| fig-align: center
+
+binomSEM <- function (v) {
+    sqrt((mean(v) * (1 - mean(v)))/length(v))}
+
+d$dx_bin <- cut(d$dx, 15)
+dag <- aggregate(cbind(rr,dx)~id+dx_bin+cond, d, mean)
+dag$se <- aggregate(rr~id+dx_bin+cond, d, binomSEM)$rr
+dag$n <- aggregate(rr~id+dx_bin+cond, d, length)$rr
+
+ggplot(dag, aes(x=dx,y=rr,color=factor(cond)))+
+  geom_errorbar(aes(ymin=rr-se,ymax=rr+se),width=0)+
+  geom_point(pch=21)+
+  facet_wrap(~id,ncol=7)+
+  theme_minimal()+
+  geom_smooth(data=d,aes(x=dx,y=rr),
+              method="glm",
+              method.args=list(family=binomial(probit)),
+              size=0.8,fullrange=T,se=F)+
+  scale_color_manual(values=c("black","blue"),guide=F)+
+  labs(y="choice probability", x="distance offset [deg]")
+```
+
+
+##### 1) Prepare data for Stan
+
+
+```{r}
+d_stan <- list(
+  id=as.numeric(factor(d$id, labels=1:length(unique(d$id)))), 
+  ds=d$dx, 
+  rr = d$rr, 
+  N=nrow(d), 
+  J=length(unique(d$id)), 
+  cond=d$cond-1)
+
+str(d_stan)
+```
+
+
+##### 2) Stan code
+
+Model code available in `stan_code/psyGLMM.stan`
+
+
+```{.stan}
+data {
+  int<lower=1> N;
+  array[N] int<lower=0, upper=1> rr;
+  array[N] real ds;
+  array[N] int<lower=0,upper=1> cond;
+  int<lower=1> J;
+  array[N] int<lower=1,upper=J> id;
+}
+
+parameters {
+  vector[4] beta;                    // fixed-effects parameters
+  vector<lower=0,upper=1>[J] lambda; // lapse rate
+  vector<lower=0>[4] sigma_u;        // random effects standard deviations
+  cholesky_factor_corr[4] L_u;       // L_u is the Choleski factor of the correlation matrix
+  matrix[4,J] z_u;                   // random effect matrix
+}
+
+transformed parameters {
+  matrix[4,J] u;
+  u = diag_pre_multiply(sigma_u, L_u) * z_u; // use Cholesky to set correlation
+}
+
+model {
+  real mu; // linear predictor
+
+  //priors
+  L_u ~ lkj_corr_cholesky(2);   // LKJ prior for the correlation matrix
+  to_vector(z_u) ~ normal(0,1); // before Cholesky, random effects are normal variates with SD=1
+  sigma_u ~ cauchy(0, 1);       // SD of random effects (vectorized)
+  beta ~ normal(0, 2);          // prior 
+  lambda ~ beta(1, 7);          // lapse rate ~50% prior that <0.1, pbeta(0.1, 1, 7)
+
+  //likelihood
+  for (i in 1:N){
+    
+    mu = beta[1] + u[1,id[i]] + 
+      cond[i]*(beta[2]+u[2,id[i]]) + 
+      (beta[3] + u[3,id[i]] + cond[i]*(beta[4] + u[4,id[i]] ))*ds[i];
+    
+    rr[i] ~ bernoulli((1-lambda[id[i]])*Phi(mu)+lambda[id[i]]/2);
+  }
+}
+```
+
+##### 3) Compile and run
+
+```{r, eval=FALSE}
+fit <- stan(file = "stan_code/psyGLMM.stan", data = d_stan, iter = 4000, chains = 4)
+```
+
+```{r, echo=FALSE}
+#saveRDS(fit,file="outputs/psyGLMM.RDS")
+fit <- readRDS("outputs/psyGLMM.RDS")
+
+```
+
+We can use the usual functions to check that the models has converged
+
+```{r}
+traceplot(fit, pars = c("beta", "sigma_u"))
+```
+
+```{r}
+#| fig-align: 'center'
+#| fig-cap-location: margin
+#| fig-width: 7
+#| fig-height: 7
+
+# Pairs plot for some key parameters
+pairs(fit, pars = c("beta", "sigma_u"))
+```
+
+```{r}
+print(fit, pars = c("beta", "sigma_u"), 
+    probs = c(0.025, 0.975), digits = 3)
+```
+
+##### 4) Inference
+
+The package `tidybayes` has useful function to visualise the posterior distribution of model parameters:
+
+```{r}
+#| fig-align: 'center'
+#| fig-cap-location: margin
+#| fig-width: 6
+#| fig-height: 5
+
+fit %>%
+  gather_draws(beta[k], sigma_u[r]) %>%
+  mutate(term = if_else(.variable == "beta",
+                        paste0("beta[", k, "]"),
+                        paste0("sigma_u[", r, "]"))) %>%
+  mutate(term = factor(term, levels = c(paste0("beta[", 1:4, "]"),
+                                        paste0("sigma_u[", 1:4, "]")))) %>%
+  ggplot(aes(x = .value, y = fct_rev(term))) +
+  geom_vline(xintercept=0, lty=2, size=0.4) +
+  stat_halfeye(.width = 0.8, normalize = "groups") +
+  labs(x = "Posterior value", y = NULL,
+       title = "Posterior densities (80% credible intervals): β and σ") +
+  theme_minimal()
+```
+
+
+Rather than GLMM coefficients, the measures of interests are the mean and SD of the cumulative Gaussian function used to model choice probabilities. The coefficients of the GLM can be straighforwardly mapped to the parameters of the psychometric function $$
+\begin{align}
+p \left(y_i\right) & = \Phi\left(\frac{x_i -\mu}{\sigma} \right) \\
+& = \Phi ( -\frac{\mu}{\sigma} + \frac{1}{\sigma}x_i )\\
+& = \Phi\left(\beta_0 + \beta_1x_i \right) \\ \\& \mu=-\frac{\beta_0}{\beta_1}, \,\,\, \sigma=\frac{1}{\beta_1} \\
+\end{align}
+$$
+We can use these relationships to estimate a Bayesian CI around the difference in the slope of the functions across the two conditions:
+
+
+```{r}
+spread_draws(fit, beta[k]) %>%
+  mutate(beta = set_names(beta, k)) %>%
+  pivot_wider(names_from = k, values_from = beta, names_prefix = "beta") %>%
+  transmute(
+    JND_1    = 1 / beta3,
+    JND_2    = 1 / (beta3 + beta4),
+    JND_diff = (1 / (beta3 + beta4)) - (1 / beta3)
+  ) %>%
+  pivot_longer(everything(), names_to = "quantity", values_to = "value") %>%
+  group_by(quantity) %>%
+  mean_hdi(value, .width = 0.95)
+```
 
 
