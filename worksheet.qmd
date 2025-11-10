@@ -408,6 +408,45 @@ Visualise posterior over the age of the universe as simple histogram
 hist(age, breaks =30, xlab="time (billions of years)")
 ```
 
+
+
+We can make this a bit nicer e.g. by adding smooth density curve and credible interval
+
+```{r}
+#| fig-align: 'center'
+#| fig-cap-location: margin
+#| fig-width: 6
+#| fig-height: 4
+
+# Get HDI interval
+hdi <- mean_hdi(age, .width = 0.95)
+
+# Compute density
+dens <- density(age, adjust=2)
+
+# Plot
+plot(dens, main = "", xlab = "time (billions of years)", lwd = 2)
+
+# Fill inside HDI
+polygon(c(dens$x[dens$x >= hdi$ymin & dens$x <= hdi$ymax], hdi$ymax, hdi$ymin),
+        c(dens$y[dens$x >= hdi$ymin & dens$x <= hdi$ymax], 0, 0),
+        col = "blue", border = NA)
+
+# Fill outside HDI
+polygon(c(dens$x[dens$x < hdi$ymin], hdi$ymin, dens$x[1]),
+        c(dens$y[dens$x < hdi$ymin], 0, 0),
+        col = "gray90", border = NA)
+polygon(c(hdi$ymax, dens$x[dens$x > hdi$ymax], rev(dens$x[dens$x > hdi$ymax])[1]),
+        c(0, dens$y[dens$x > hdi$ymax], 0),
+        col = "gray90", border = NA)
+
+# Redraw density line on top
+lines(dens, lwd = 3)
+```
+
+
+
+
 We can also visualise posterior samples as regression lines, to give a visual summary of the precision of model predictions
 
 ```{r}
@@ -428,42 +467,6 @@ abline(a = 0, b = median(posterior_samples$beta), lwd = 3, col = "blue")
 
 # (redraw the points to prevent them being hidden by the lines)
 points(d$distance, d$velocity, pch=19)
-```
-
-
-
-We can make this a bit nicer e.g. by adding smooth density curve and credible interval
-
-```{r}
-#| fig-align: 'center'
-#| fig-cap-location: margin
-#| fig-width: 6
-#| fig-height: 4
-
-# Get HDI interval
-hdi <- mean_hdi(age, .width = 0.95)
-
-# Compute density
-d <- density(age, adjust=2)
-
-# Plot
-plot(d, main = "", xlab = "time (billions of years)", lwd = 2)
-
-# Fill inside HDI
-polygon(c(d$x[d$x >= hdi$ymin & d$x <= hdi$ymax], hdi$ymax, hdi$ymin),
-        c(d$y[d$x >= hdi$ymin & d$x <= hdi$ymax], 0, 0),
-        col = "blue", border = NA)
-
-# Fill outside HDI
-polygon(c(d$x[d$x < hdi$ymin], hdi$ymin, d$x[1]),
-        c(d$y[d$x < hdi$ymin], 0, 0),
-        col = "gray90", border = NA)
-polygon(c(hdi$ymax, d$x[d$x > hdi$ymax], rev(d$x[d$x > hdi$ymax])[1]),
-        c(0, d$y[d$x > hdi$ymax], 0),
-        col = "gray90", border = NA)
-
-# Redraw density line on top
-lines(d, lwd = 3)
 ```
 
 
@@ -542,6 +545,17 @@ Load data into R
 ```{r}
 d <- read_delim("data/police_stops.txt")
 str(d)
+ print(d, n=14)
+```
+
+We first add crime and stop counts over crime type (i.e. we are pooling together all crime types)
+
+```{r}
+d <- d %>%
+  group_by(precinct, eth) %>%
+  summarise(stops = sum(stops),
+         past.arrests = sum(past.arrests),
+         pop = unique(pop))
 ```
 
 
@@ -572,14 +586,12 @@ d_summaries
 ##### 1) Prepare data for Stan
 
 
-Important: If `past.arrests == 0` for some rows but stops are nonzero, we need to avoid a zero Poisson mean. 
+Important: If `past.arrests == 0` for some rows but stops are nonzero, we need to avoid a zero Poisson mean. In this case however no adjustment is needed (otherwise we could have added a small constant, e.g. 0.5, to zeroes in `past.arrests`)
 
 ```{r}
 any(d$past.arrests == 0)
 ```
 
-
-One quick fix is to add a small constant (e.g. 0.5) to `past.arrests`.
 
 
 ```{r}
@@ -718,7 +730,7 @@ posterior %>%
 ```
 
 
-If `e=1` = black, `e=2` = hispanic, `e=3` = white, these give the average ratio of stops to arrests for each ethnicity, controlling for precinct and overdispersion.
+If `e=1` = black, `e=2` = hispanic, `e=3` = white, these give the average ratio of stops to arrests for each ethnicity, accounting for precinct and overdispersion.
 
 You might then compare black vs. white, etc., by calculating differences or ratios in the posterior draws.
 
@@ -770,6 +782,12 @@ ggplot(posterior_ratios, aes(x = contrast, y = ratio)) +
 
 ##### 5) Prior predictive check
 
+To check that the prior is sensible, it can be useful to simulate the _prior predictive distribution_ and compare it to the actual, observed data. This is defined as 
+
+$$p(y) =  \int p(y\mid \Theta) \ p( \Theta) d\Theta $$
+where $\Theta$ indicate the parameters, in this case $\Theta = \left\{ \alpha, \sigma_{\beta}, \sigma_{\epsilon} \right\}$.
+
+In other words, we resample both observation-level over dispersion values, the precinct-specific random intercepts, as well as the poisson observations. This gives us a way to estimate the prior predictive distribution, which we can then compare to the actual data. Ideally, the observed data should lie well within the prior-predictive distribution, suggesting that our priors were adequate and not too informative. 
 
 ```{r}
 N <- nrow(d)
@@ -817,9 +835,16 @@ for (s in 1:n_sims) {
   # 3) Store in a big vector for later comparison
   all_prior_stops <- c(all_prior_stops, y_sim)
 }
+```
 
-# Now we have n_sims * N simulated 'stops' from the prior
-# Compare with the empirical distribution:
+
+Now we have the number of 'stops' simulated from the prior, and we can compare with the empirical distribution:
+
+```{r}
+#| fig-align: 'center'
+#| fig-cap-location: margin
+#| fig-width: 6
+#| fig-height: 3
 observed_stops <- d$stops
 
 df_plot <- tibble(
@@ -836,5 +861,109 @@ ggplot(df_plot, aes(x = value, fill = type)) +
   theme_minimal()+
   scale_x_log10()
 ```
+
+##### 6) Posterior predictive check
+
+We can use a similar approach to compare the posterior distribution to the observed data. That is, we are comparing the data with the _posterior predictive distribution_
+
+$$p(y^{\text{rep}} \mid y) =  \int p(y^{\text{rep}} \mid \Theta) \ p( \Theta \mid y) d\Theta $$
+It may be useful to not resample all of the random effects; in this case for example I decided to hold fixed the precinct-specific random intercepts, and to resample only the observation-level overdispersion values. 
+
+This allows me to compute a predictive interval for the stop rate in each precinct, which allows more granularity in the comparison between model and data.
+
+There are different ways to do this, either via R (as in the prior predictive check above) or we can take advantage of the generated quantities block in Stan, and add the following to our model code:
+
+```{.stan}
+generated quantities {
+  vector[N] log_lik; // Log-likelihood for each observation (for LOO-CV)
+  real eps_rep; // random effects observation-level overdipersion
+  array[N] int y_rep;
+
+  for (i in 1:N) {
+
+    // Compute log-likelihood for observed data    
+    log_lik[i] = poisson_lpmf(y[i] | past_arrests[i] * (15.0 / 12.0) * exp(alpha[eth[i]] + beta[precinct[i]] + eps[i]));
+
+    // Simulate replicated data from posterior predictive distribution
+    eps_rep = sigma_eps * normal_rng(0, 1);
+    y_rep[i] = poisson_rng(past_arrests[i] * (15.0 / 12.0) * exp(alpha[eth[i]] + beta[precinct[i]] + eps_rep));
+  }
+}
+
+```
+
+Assuming the code is saved in the file `stan_code/overdispersed_poisson_PPC.stan`, we then need to re-do the sampling:
+
+```{r, eval=FALSE}
+fit <- stan(
+  file = "stan_code/overdispersed_poisson_PPC.stan",
+  data = stan_data,
+  iter = 2000,
+  chains = 4,
+  cores = 4)
+
+```
+```{r, echo=FALSE}
+fit <- readRDS("outputs/police_stops_PPC.RDS")
+```
+
+Once we have run that, we can extract the posterior predictive for each precinct, and plot them alongside the observed.
+
+
+```{r}
+#| fig-align: 'center'
+#| fig-cap-location: margin
+#| fig-width: 5
+#| fig-height: 8
+
+# Map observation index -> precinct
+precinct_idx <- d$precinct  # length N
+
+# Observed precinct totals
+obs_totals <- d %>%
+  group_by(precinct) %>%
+  summarise(obs_total = sum(stops), .groups = "drop")
+
+# Exposure per precinct (for *rates* option)
+exposure_by_precinct <- d %>%
+  mutate(expo = past.arrests * (15/12)) %>%
+  group_by(precinct) %>%
+  summarise(exposure = sum(expo), .groups = "drop")
+
+# 1) Extract posterior predictive draws for y_rep[i]
+yrep_long <- fit %>%
+  spread_draws(y_rep[i]) %>%
+  mutate(precinct = precinct_idx[i])
+
+# 2) Aggregate to precinct totals per draw
+ppc_totals <- yrep_long %>%
+  group_by(.draw, precinct) %>%
+  summarise(rep_total = sum(y_rep), .groups = "drop")
+
+# 3a) (Totals) Summarise mean and 95% CI per precinct
+ppc_totals_sum <- ppc_totals %>%
+  group_by(precinct) %>%
+  mean_qi(rep_total, .width = 0.95) %>%    # columns: rep_total, .lower, .upper
+  ungroup() %>%
+  left_join(obs_totals, by = "precinct")
+
+ppc_totals_sum_ord <- ppc_totals_sum %>%
+  mutate(precinct_ord = fct_reorder(factor(precinct), obs_total))
+
+
+# 4a) Plot totals: posterior predictive (mean + 95% CI) vs observed
+ppc_totals_sum %>%
+  mutate(precinct = fct_reorder(factor(precinct), obs_total)) %>%
+  ggplot(aes(x = factor(precinct), y = rep_total)) +
+  geom_pointrange(aes(ymin = .lower, ymax = .upper), color="dark grey") +
+  geom_point(aes(y = obs_total), shape = 4, size = 2, position = position_nudge(x = 0.15)) +
+  labs(x = "Precinct", y = "Total stops",
+       title = "Posterior predictive totals by precinct",
+       subtitle = "Points = posterior mean (CI = 95%), X = observed total") +
+  coord_flip() +
+  theme_minimal()
+```
+
+
 
 

@@ -552,7 +552,7 @@ Matteo Lisi
 <h2>Bayesian inference</h2>
 <ul>
 <li class="fragment"><p>To study a specific parameter (e.g.&nbsp;the slope <span class="math inline">\(\beta_1\)</span>), we look at its <em>marginal posterior distribution</em>.</p></li>
-<li class="fragment"><p>This is obtained by averaging over the other parameters: <span class="math display">\[p(\beta_1 \mid \text{data}) = \int \int p(\beta_1, \beta_0, \sigma \mid \text{data}), d\beta_0, d\sigma.\]</span></p></li>
+<li class="fragment"><p>This is obtained by averaging over the other parameters: <span class="math display">\[p(\beta_1 \mid \text{data}) = \iint p(\beta_1, \beta_0, \sigma \mid \text{data}), d\beta_0, d\sigma.\]</span></p></li>
 <li class="fragment"><p>For complex models, this integration is done efficiently using <strong>Markov Chain Monte Carlo (MCMC)</strong> sampling.</p></li>
 <li class="fragment"><p>MCMC yields samples from the posterior; summarizing the marginal posterior then reduces to counting these samples.</p></li>
 </ul>
@@ -606,8 +606,8 @@ Matteo Lisi
 <p>&nbsp;</p>
 <p>Custom function to compute the log likelihood, holding the data fixed.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> sleepstudy<span class="sc">$</span>Days[sleepstudy<span class="sc">$</span>Subject<span class="sc">==</span><span class="st">"308"</span>]</span>
-<span id="cb1-2"><a href="" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> sleepstudy<span class="sc">$</span>Reaction[sleepstudy<span class="sc">$</span>Subject<span class="sc">==</span><span class="st">"308"</span>]</span>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="" aria-hidden="true" tabindex="-1"></a>x <span class="ot">&lt;-</span> sleepstudy<span class="sc">$</span>Days[sleepstudy<span class="sc">$</span>Subject<span class="sc">==</span><span class="st">"308"</span>]      <span class="co"># predictor</span></span>
+<span id="cb1-2"><a href="" aria-hidden="true" tabindex="-1"></a>y <span class="ot">&lt;-</span> sleepstudy<span class="sc">$</span>Reaction[sleepstudy<span class="sc">$</span>Subject<span class="sc">==</span><span class="st">"308"</span>]  <span class="co"># outcome</span></span>
 <span id="cb1-3"><a href="" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-4"><a href="" aria-hidden="true" tabindex="-1"></a>loglik <span class="ot">&lt;-</span> <span class="cf">function</span>(par){</span>
 <span id="cb1-5"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="co"># parameter vector = [intercept, slope, log(SD)]</span></span>
@@ -728,11 +728,11 @@ Matteo Lisi
 <div class="cell-output cell-output-stdout">
 <pre><code>         [,1]     [,2]     [,3]
 [1,] 250.0000 20.00000 5.000000
-[2,] 252.4293 19.05077 4.952470
-[3,] 265.2094 17.19395 5.152875
-[4,] 265.2094 17.19395 5.152875
-[5,] 275.4176 15.52590 5.177332
-[6,] 275.4176 15.52590 5.177332</code></pre>
+[2,] 269.2468 19.95255 4.919983
+[3,] 255.3154 13.66971 4.620482
+[4,] 284.5828 16.68324 4.216360
+[5,] 284.5828 16.68324 4.216360
+[6,] 284.5828 16.68324 4.216360</code></pre>
 </div>
 </div>
 </section>
@@ -763,7 +763,7 @@ Matteo Lisi
 <span id="cb9-5"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># mean of posterior distribution</span></span>
 <span id="cb9-6"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(slope_samples)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 21.49595</code></pre>
+<pre><code>[1] 21.42888</code></pre>
 </div>
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># 95% Bayesian credible interval</span></span>
 <span id="cb11-2"><a href="" aria-hidden="true" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> <span class="fl">0.05</span></span>
@@ -772,7 +772,7 @@ Matteo Lisi
 <span id="cb11-5"><a href="" aria-hidden="true" tabindex="-1"></a>      <span class="at">digits=</span><span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code> 2.5% 97.5% 
- 8.95 32.51 </code></pre>
+10.47 31.58 </code></pre>
 </div>
 </div>
 </section>
@@ -946,10 +946,10 @@ Matteo Lisi
 post-warmup draws per chain=1000, total post-warmup draws=4000.
 
         mean se_mean    sd   2.5%    50%  97.5% n_eff Rhat
-beta   76.55    0.08  4.19  68.35  76.50  84.84  2558    1
-sigma 273.50    0.97 44.17 204.91 267.99 380.80  2092    1
+beta   76.60    0.07  4.20  68.18  76.68  84.75  3210    1
+sigma 273.99    0.86 42.65 207.16 268.62 369.71  2487    1
 
-Samples were drawn using NUTS(diag_e) at Thu Nov  6 17:12:27 2025.
+Samples were drawn using NUTS(diag_e) at Mon Nov 10 14:39:13 2025.
 For each parameter, n_eff is a crude measure of effective sample size,
 and Rhat is the potential scale reduction factor on split chains (at 
 convergence, Rhat=1).</code></pre>
@@ -975,12 +975,12 @@ convergence, Rhat=1).</code></pre>
 <pre><code># A tibble: 6 × 4
   .chain .iteration .draw  beta
    &lt;int&gt;      &lt;int&gt; &lt;int&gt; &lt;dbl&gt;
-1      1          1     1  79.4
-2      1          2     2  74.8
-3      1          3     3  74.6
-4      1          4     4  81.8
-5      1          5     5  81.1
-6      1          6     6  80.8</code></pre>
+1      1          1     1  67.8
+2      1          2     2  77.0
+3      1          3     3  78.2
+4      1          4     4  78.4
+5      1          5     5  74.6
+6      1          6     6  80.9</code></pre>
 </div>
 </div>
 </section>
@@ -1002,7 +1002,7 @@ convergence, Rhat=1).</code></pre>
 <span id="cb26-13"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># point estimate</span></span>
 <span id="cb26-14"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(age)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 12.83895</code></pre>
+<pre><code>[1] 12.83049</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -1013,7 +1013,7 @@ convergence, Rhat=1).</code></pre>
 <span id="cb28-5"><a href="" aria-hidden="true" tabindex="-1"></a>      <span class="at">digits=</span><span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code> 2.5% 97.5% 
-11.55 14.34 </code></pre>
+11.56 14.37 </code></pre>
 </div>
 </div>
 </section>
@@ -1101,7 +1101,7 @@ Model the rate of police stops across ethnic groups and precincts, adjusting for
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Black</td>
-<td style="text-align: right;">7463580</td>
+<td style="text-align: right;">1865895</td>
 <td style="text-align: right;">69823</td>
 <td style="text-align: right;">125719</td>
 <td style="text-align: right;">53%</td>
@@ -1109,7 +1109,7 @@ Model the rate of police stops across ethnic groups and precincts, adjusting for
 </tr>
 <tr class="even">
 <td style="text-align: left;">Hispanic</td>
-<td style="text-align: right;">6929076</td>
+<td style="text-align: right;">1732269</td>
 <td style="text-align: right;">44623</td>
 <td style="text-align: right;">74898</td>
 <td style="text-align: right;">34%</td>
@@ -1117,7 +1117,7 @@ Model the rate of police stops across ethnic groups and precincts, adjusting for
 </tr>
 <tr class="odd">
 <td style="text-align: left;">White</td>
-<td style="text-align: right;">12701416</td>
+<td style="text-align: right;">3175354</td>
 <td style="text-align: right;">16974</td>
 <td style="text-align: right;">35922</td>
 <td style="text-align: right;">13%</td>

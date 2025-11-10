@@ -46,3 +46,19 @@ model {
     y[i] ~ poisson(past_arrests[i] * (15.0 / 12.0) * exp(alpha[eth[i]] + beta[precinct[i]] + eps[i]));
   }
 }
+
+generated quantities {
+  vector[N] log_lik; // Log-likelihood for each observation (for LOO-CV)
+  real eps_rep; // random effects observation-level overdipersion
+  array[N] int y_rep;
+
+  for (i in 1:N) {
+
+    // Compute log-likelihood for observed data    
+    log_lik[i] = poisson_lpmf(y[i] | past_arrests[i] * (15.0 / 12.0) * exp(alpha[eth[i]] + beta[precinct[i]] + eps[i]));
+
+    // Simulate replicated data from posterior predictive distribution
+    eps_rep = sigma_eps * normal_rng(0, 1);
+    y_rep[i] = poisson_rng(past_arrests[i] * (15.0 / 12.0) * exp(alpha[eth[i]] + beta[precinct[i]] + eps_rep));
+  }
+}

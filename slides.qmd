@@ -386,7 +386,7 @@ In a Bayesian setting we have:
 
 - To study a specific parameter (e.g. the slope $\beta_1$), we look at its _marginal posterior distribution_.
 
-- This is obtained by averaging over the other parameters: $$p(\beta_1 \mid \text{data}) = \int \int p(\beta_1, \beta_0, \sigma \mid \text{data}), d\beta_0, d\sigma.$$
+- This is obtained by averaging over the other parameters: $$p(\beta_1 \mid \text{data}) = \iint p(\beta_1, \beta_0, \sigma \mid \text{data}), d\beta_0, d\sigma.$$
 
 - For complex models, this integration is done efficiently using **Markov Chain Monte Carlo (MCMC)** sampling.
 
@@ -1002,6 +1002,12 @@ d <- read_delim("data/police_stops.txt")
   
 
 ```{r, echo=FALSE}
+d <- d %>%
+  group_by(precinct, eth) %>%
+  summarise(stops = sum(stops),
+         past.arrests = sum(past.arrests),
+         pop = unique(pop))
+
 d_summaries <- d %>%
   mutate(
     eth = case_when(
