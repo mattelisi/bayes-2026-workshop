@@ -2,3 +2,4 @@
 *.RDS
 scrap.R
 *.Rdata
+.Rhistory

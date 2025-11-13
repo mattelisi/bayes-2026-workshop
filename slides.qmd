@@ -150,36 +150,45 @@ par_dark_slide <- function(
 
 ::: {.column width="40%"}
 
-::::: fragment
 
 ![](img/meme_leaving.png){fig-align="center" width="90%"}
 
-:::::
 
 :::
 
 ::::::::::::
 
+
+:::: fragment
+
+![https://mc-stan.org/](img/logo_stan.png){fig-align="center" width="10%"}
+
+::::
+
 ---
 
 ## Outline
 
-::: {.incremental}
+::: nonincremental
+
 1. How to fit a model to data: frequentist & Bayesian approaches
 2. Computations in Bayesian inference & MCMC sampling
 3. Examples:
-  - Linear regression
-  - Overdispersed Poisson GLMM
-  - Lapse-augmented probit GLMM.
+
+    - Linear regression
+    - Overdispersed Poisson GLMM
+    - Lapse-augmented probit GLMM.
+  
 5. Priors
-5. Bayes factors
+6. Bayes factors
+
 :::
 
 ---
 
 ## Fitting a model: frequentist approach
 
-::: {.incremental}
+::: nonincremental
 - Maximum likelihood estimation (MLE)
 - **Likelihood function**: a function that gives the probability of the data, given some parameter values.
 :::
@@ -289,7 +298,7 @@ for(i in seq(8,43,length.out=4)){
 
 
 - For a simple linear regression $$y_i= \beta_0 + \beta_1x_i+\epsilon_i$$ $$\epsilon_i \sim \mathcal{N}(0, \sigma^2)$$ the likelihood is 
-$$p(\underbrace{y, x}_{\text{data}} \mid \underbrace{\beta_0, \beta_1, \sigma^2}_{\text{parameters}} ) = \underbrace{\prod_{i=1}^{n}}_{\text{product}} \,\, \underbrace{\mathcal{N}(\overbrace{\beta_0 + \beta_1 x_i}^{\text{predicted value}}\,\,,\,\,\, \sigma^2)}_{\text{Gaussian probability density}}$$
+$$p(\underbrace{y}_{\text{data}} \mid \underbrace{\beta_0, \beta_1, \sigma^2}_{\text{parameters}} ) = \underbrace{\prod_{i=1}^{n}}_{\text{product}} \,\, \underbrace{\mathcal{N}(\overbrace{\beta_0 + \beta_1 x_i}^{\text{predicted value}}\,\,,\,\,\, \sigma^2)}_{\text{Gaussian pdf}}$$
 
 
 
@@ -302,7 +311,7 @@ In practice, we usually work with the logarithm of the likelihood function (_log
 <br>
 
 $$\begin{align} 
-\mathcal{L}(y, x \mid \beta_0, \beta_1, \sigma^2 )  & = \log \left[ L(y, x \mid \beta_0, \beta_1, \sigma^2)  \right]\\
+\mathcal{L}(y \mid \beta_0, \beta_1, \sigma^2 )  & = \log \left[ L(y \mid \beta_0, \beta_1, \sigma^2)  \right]\\
   = -\frac{n}{2}\log(2\pi) & - \frac{n}{2}\log(\sigma^2) - \frac{1}{2\sigma^2} \underbrace{\sum_{i=1}^n \left( y_i - \beta_0 - \beta_1 x_i\right)^2}_{\text{sum of squared residual errors}}\\
 \end{align}$$
 
@@ -689,6 +698,8 @@ round(c(quantile(slope_samples, probs = alpha/2),
 1. Linear regression
 
 2. Overdispersed Poisson GLMM
+
+3. Lapse-augmented probit GLMM.
 
 
 # Example 1: Linear regression
