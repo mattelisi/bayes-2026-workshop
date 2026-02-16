@@ -11,7 +11,7 @@
   <meta name="generator" content="quarto-1.5.57">
 
   <meta name="author" content="Matteo Lisi">
-  <title>Building and Customising Statistical Models with Stan and R: An Introduction to Bayesian Inference</title>
+  <title>Bayesian modelling in R and Stan</title>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui">
@@ -393,8 +393,8 @@
     <div class="slides">
 
 <section id="title-slide" class="quarto-title-block center">
-  <h1 class="title">Building and Customising Statistical Models with Stan and R: An Introduction to Bayesian Inference</h1>
-  <p class="subtitle"><br><em>Workshops for Ukraine</em><br></p>
+  <h1 class="title">Bayesian modelling in R and Stan</h1>
+  <p class="subtitle"><br><em>PGR Training 18 Feb 2026</em><br></p>
 
 <div class="quarto-title-authors">
 <div class="quarto-title-author">
@@ -404,32 +404,6 @@ Matteo Lisi
 </div>
 </div>
 
-</section>
-<section id="section" class="slide level2 small-font">
-<h2></h2>
-<div class="columns">
-<div class="column" style="width:60%;">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="img/test_map.png" style="width:90.0%"></p>
-<figcaption>from ‘Statistical rethinking’, Richard McElreath</figcaption>
-</figure>
-</div>
-</div><div class="column" style="width:40%;">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="img/meme_leaving.png" class="quarto-figure quarto-figure-center" style="width:90.0%"></p>
-</figure>
-</div>
-</div></div>
-<div class="fragment">
-<div class="quarto-figure quarto-figure-center">
-<figure>
-<p><img data-src="img/logo_stan.png" style="width:10.0%"></p>
-<figcaption>https://mc-stan.org/</figcaption>
-</figure>
-</div>
-</div>
 </section>
 <section id="outline" class="slide level2">
 <h2>Outline</h2>
@@ -441,7 +415,7 @@ Matteo Lisi
 <ul>
 <li>Linear regression</li>
 <li>Overdispersed Poisson GLMM</li>
-<li>Lapse-augmented probit GLMM.</li>
+<li>Multilevel psychometric function with lapses</li>
 </ul></li>
 <li><p>Priors</p></li>
 <li><p>Bayes factors</p></li>
@@ -788,6 +762,30 @@ Matteo Lisi
 </div>
 </div>
 </section>
+<section id="bayesian-inference-after-mcmc-its-just-counting" class="slide level2 scrollable">
+<h2>Bayesian inference after MCMC: it’s just counting</h2>
+<p>Once we have posterior samples <span class="math inline">\(\{\beta_1 ^{(1)}, \beta_1 ^{(2)}, \dots, \beta_1 ^{(S)}\}\)</span> any probability statement becomes a simple proportion of samples.</p>
+<p>&nbsp;</p>
+<div class="fragment">
+<p><strong>95% credible interval</strong> → Middle 95% of sampled values.</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">quantile</span>(slope_samples, <span class="at">probs =</span> <span class="fu">c</span>(<span class="fl">0.025</span>, <span class="fl">0.975</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>&nbsp;</p>
+<div class="fragment">
+<p><strong>Probability the slope is positive</strong> → <span class="math inline">\(p(\beta_1 &gt; 0 \mid \text{data})\)</span></p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(slope_samples <span class="sc">&gt;</span> <span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>&nbsp;</p>
+<div class="fragment">
+<p><strong>Probability the slope lies in a meaningful range</strong> → <span class="math inline">\(p(0 &lt; \beta_1 &lt; 5 \mid \text{data})\)</span></p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(slope_samples <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;</span> slope_samples <span class="sc">&lt;</span> <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>&nbsp;</p>
+<div class="fragment">
+<p><strong>Probability the slope exceeds a threshold</strong> → <span class="math inline">\(p(\beta_1 &gt; 10 \mid \text{data})\)</span></p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(slope_samples <span class="sc">&gt;</span> <span class="dv">10</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
 <section id="mcmc-sampling" class="slide level2">
 <h2>MCMC sampling</h2>
 <ul>
@@ -816,16 +814,16 @@ Matteo Lisi
 <h2><code>Hubble</code> dataset</h2>
 <p>&nbsp;</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"data/hubble.csv"</span>)</span>
-<span id="cb13-2"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"data/hubble.csv"</span>)</span>
+<span id="cb17-2"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>'data.frame':   24 obs. of  3 variables:
  $ Galaxy  : chr  "NGC0300" "NGC0925" "NGC1326A" "NGC1365" ...
  $ velocity: int  133 664 1794 1594 1473 278 714 882 80 772 ...
  $ distance: num  2 9.16 16.14 17.95 21.88 ...</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>    Galaxy velocity distance
 1  NGC0300      133     2.00
@@ -872,25 +870,25 @@ Matteo Lisi
 <p>&nbsp;</p>
 <div class="columns">
 <div class="column" style="width:50%;">
-<div class="sourceCode" id="cb17"><pre class="sourceCode stan code-with-copy"><code class="sourceCode stan"><span id="cb17-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> {</span>
-<span id="cb17-2"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span>&lt;<span class="kw">lower</span>=<span class="dv">1</span>&gt; N;       <span class="co">// number of datapoints</span></span>
-<span id="cb17-3"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">vector</span>[N] distance;   <span class="co">// Mpc</span></span>
-<span id="cb17-4"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">vector</span>[N] velocity;   <span class="co">// km/s</span></span>
-<span id="cb17-5"><a href="" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb17-6"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-7"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">parameters</span> {</span>
-<span id="cb17-8"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">real</span>&lt;<span class="kw">lower</span>=<span class="dv">0</span>&gt; beta;   <span class="co">// km/s/Mpc, Hubble constant (slope)</span></span>
-<span id="cb17-9"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">real</span>&lt;<span class="kw">lower</span>=<span class="dv">0</span>&gt; sigma;  <span class="co">// km/s</span></span>
-<span id="cb17-10"><a href="" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb17-11"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-12"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">model</span> {</span>
-<span id="cb17-13"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="co">// weakly-informative half-normal priors via &lt;lower=0&gt;</span></span>
-<span id="cb17-14"><a href="" aria-hidden="true" tabindex="-1"></a>  beta  ~ normal(<span class="dv">0</span>, <span class="dv">200</span>);</span>
-<span id="cb17-15"><a href="" aria-hidden="true" tabindex="-1"></a>  sigma ~ normal(<span class="dv">0</span>, <span class="dv">2000</span>);</span>
-<span id="cb17-16"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb17-17"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="co">// likelihood</span></span>
-<span id="cb17-18"><a href="" aria-hidden="true" tabindex="-1"></a>  velocity ~ normal(beta * distance, sigma);</span>
-<span id="cb17-19"><a href="" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb21"><pre class="sourceCode stan code-with-copy"><code class="sourceCode stan"><span id="cb21-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> {</span>
+<span id="cb21-2"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span>&lt;<span class="kw">lower</span>=<span class="dv">1</span>&gt; N;       <span class="co">// number of datapoints</span></span>
+<span id="cb21-3"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">vector</span>[N] distance;   <span class="co">// Mpc</span></span>
+<span id="cb21-4"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">vector</span>[N] velocity;   <span class="co">// km/s</span></span>
+<span id="cb21-5"><a href="" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb21-6"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-7"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">parameters</span> {</span>
+<span id="cb21-8"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">real</span>&lt;<span class="kw">lower</span>=<span class="dv">0</span>&gt; beta;   <span class="co">// km/s/Mpc, Hubble constant (slope)</span></span>
+<span id="cb21-9"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">real</span>&lt;<span class="kw">lower</span>=<span class="dv">0</span>&gt; sigma;  <span class="co">// km/s</span></span>
+<span id="cb21-10"><a href="" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb21-11"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-12"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">model</span> {</span>
+<span id="cb21-13"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="co">// weakly-informative half-normal priors via &lt;lower=0&gt;</span></span>
+<span id="cb21-14"><a href="" aria-hidden="true" tabindex="-1"></a>  beta  ~ normal(<span class="dv">0</span>, <span class="dv">200</span>);</span>
+<span id="cb21-15"><a href="" aria-hidden="true" tabindex="-1"></a>  sigma ~ normal(<span class="dv">0</span>, <span class="dv">2000</span>);</span>
+<span id="cb21-16"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-17"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="co">// likelihood</span></span>
+<span id="cb21-18"><a href="" aria-hidden="true" tabindex="-1"></a>  velocity ~ normal(beta * distance, sigma);</span>
+<span id="cb21-19"><a href="" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div><div class="column" style="width:50%;">
 <div>
 <p>The code contain 3 blocks:</p>
@@ -907,13 +905,13 @@ Matteo Lisi
 <h2>Prepare data and sample from posterior</h2>
 <p>Stan wants data in a list format:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="" aria-hidden="true" tabindex="-1"></a>stan_data <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb18-2"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="at">N =</span> <span class="fu">nrow</span>(d),</span>
-<span id="cb18-3"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="at">distance =</span> d<span class="sc">$</span>distance, <span class="co"># Mpc</span></span>
-<span id="cb18-4"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="at">velocity =</span> d<span class="sc">$</span>velocity  <span class="co"># km/s</span></span>
-<span id="cb18-5"><a href="" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb18-6"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-7"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(stan_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="" aria-hidden="true" tabindex="-1"></a>stan_data <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb22-2"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="at">N =</span> <span class="fu">nrow</span>(d),</span>
+<span id="cb22-3"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="at">distance =</span> d<span class="sc">$</span>distance, <span class="co"># Mpc</span></span>
+<span id="cb22-4"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="at">velocity =</span> d<span class="sc">$</span>velocity  <span class="co"># km/s</span></span>
+<span id="cb22-5"><a href="" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb22-6"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-7"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(stan_data)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>List of 3
  $ N       : int 24
@@ -926,22 +924,22 @@ Matteo Lisi
 <h2>Sample from posterior</h2>
 <p>Load <code>rstan</code> library and run sampling</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rstan)</span>
-<span id="cb20-2"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">rstan_options</span>(<span class="at">auto_write =</span> <span class="cn">TRUE</span>)               <span class="co"># save compiled model</span></span>
-<span id="cb20-4"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">mc.cores =</span> parallel<span class="sc">::</span><span class="fu">detectCores</span>()<span class="sc">-</span><span class="dv">1</span>)  <span class="co"># make all cores-1 available for running parallel chains </span></span>
-<span id="cb20-5"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-6"><a href="" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">stan</span>(</span>
-<span id="cb20-7"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">"stan_code/hubble_model.stan"</span>,</span>
-<span id="cb20-8"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> stan_data,</span>
-<span id="cb20-9"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="at">iter =</span> <span class="dv">2000</span>,        <span class="co"># number of iterations</span></span>
-<span id="cb20-10"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="at">chains =</span> <span class="dv">4</span>)         <span class="co"># number of parallel chains</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rstan)</span>
+<span id="cb24-2"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">rstan_options</span>(<span class="at">auto_write =</span> <span class="cn">TRUE</span>)               <span class="co"># save compiled model</span></span>
+<span id="cb24-4"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">mc.cores =</span> parallel<span class="sc">::</span><span class="fu">detectCores</span>()<span class="sc">-</span><span class="dv">1</span>)  <span class="co"># make all cores-1 available for running parallel chains </span></span>
+<span id="cb24-5"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-6"><a href="" aria-hidden="true" tabindex="-1"></a>fit <span class="ot">&lt;-</span> <span class="fu">stan</span>(</span>
+<span id="cb24-7"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="at">file =</span> <span class="st">"stan_code/hubble_model.stan"</span>,</span>
+<span id="cb24-8"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> stan_data,</span>
+<span id="cb24-9"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="at">iter =</span> <span class="dv">2000</span>,        <span class="co"># number of iterations</span></span>
+<span id="cb24-10"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="at">chains =</span> <span class="dv">4</span>)         <span class="co"># number of parallel chains</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="convergence-checks" class="slide level2">
 <h2>Convergence checks</h2>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb21" data-cap-location="margin"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">traceplot</span>(fit, <span class="at">pars =</span> <span class="fu">c</span>(<span class="st">"beta"</span>,<span class="st">"sigma"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb25" data-cap-location="margin"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">traceplot</span>(fit, <span class="at">pars =</span> <span class="fu">c</span>(<span class="st">"beta"</span>,<span class="st">"sigma"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -952,7 +950,7 @@ Matteo Lisi
 </div>
 <div class="fragment">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fit, <span class="at">pars =</span> <span class="fu">c</span>(<span class="st">"beta"</span>,<span class="st">"sigma"</span>), <span class="at">probs =</span> <span class="fu">c</span>(.<span class="dv">025</span>,.<span class="dv">5</span>,.<span class="dv">975</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(fit, <span class="at">pars =</span> <span class="fu">c</span>(<span class="st">"beta"</span>,<span class="st">"sigma"</span>), <span class="at">probs =</span> <span class="fu">c</span>(.<span class="dv">025</span>,.<span class="dv">5</span>,.<span class="dv">975</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Inference for Stan model: anon_model.
 4 chains, each with iter=2000; warmup=1000; thin=1; 
@@ -978,12 +976,12 @@ convergence, Rhat=1).</code></pre>
 <section id="posterior-samples" class="slide level2">
 <h2>Posterior samples</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidybayes)</span>
-<span id="cb24-2"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-3"><a href="" aria-hidden="true" tabindex="-1"></a>posterior_samples <span class="ot">&lt;-</span> fit <span class="sc">%&gt;%</span></span>
-<span id="cb24-4"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">spread_draws</span>(beta) </span>
-<span id="cb24-5"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb24-6"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(posterior_samples)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidybayes)</span>
+<span id="cb28-2"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-3"><a href="" aria-hidden="true" tabindex="-1"></a>posterior_samples <span class="ot">&lt;-</span> fit <span class="sc">%&gt;%</span></span>
+<span id="cb28-4"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">spread_draws</span>(beta) </span>
+<span id="cb28-5"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-6"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(posterior_samples)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code># A tibble: 6 × 4
   .chain .iteration .draw  beta
@@ -1000,30 +998,30 @@ convergence, Rhat=1).</code></pre>
 <section id="posterior-for-age-of-the-universe" class="slide level2">
 <h2>Posterior for age of the universe</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="" aria-hidden="true" tabindex="-1"></a>mpc_km <span class="ot">&lt;-</span> <span class="fl">3.09e19</span> <span class="co"># km per Megaparsec</span></span>
-<span id="cb26-2"><a href="" aria-hidden="true" tabindex="-1"></a>sec_per_year <span class="ot">&lt;-</span> <span class="dv">60</span><span class="sc">^</span><span class="dv">2</span> <span class="sc">*</span> <span class="dv">24</span> <span class="sc">*</span> <span class="dv">365</span></span>
-<span id="cb26-3"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-4"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># transform in Km</span></span>
-<span id="cb26-5"><a href="" aria-hidden="true" tabindex="-1"></a>hubble.const <span class="ot">&lt;-</span> posterior_samples<span class="sc">$</span>beta<span class="sc">/</span> mpc_km </span>
-<span id="cb26-6"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-7"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># invert to get age in seconds</span></span>
-<span id="cb26-8"><a href="" aria-hidden="true" tabindex="-1"></a>age <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span>hubble.const</span>
-<span id="cb26-9"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-10"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># transform age in billion years</span></span>
-<span id="cb26-11"><a href="" aria-hidden="true" tabindex="-1"></a>age <span class="ot">&lt;-</span> (age<span class="sc">/</span>sec_per_year) <span class="sc">/</span> <span class="dv">10</span><span class="sc">^</span><span class="dv">9</span></span>
-<span id="cb26-12"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb26-13"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># point estimate</span></span>
-<span id="cb26-14"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(age)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="" aria-hidden="true" tabindex="-1"></a>mpc_km <span class="ot">&lt;-</span> <span class="fl">3.09e19</span> <span class="co"># km per Megaparsec</span></span>
+<span id="cb30-2"><a href="" aria-hidden="true" tabindex="-1"></a>sec_per_year <span class="ot">&lt;-</span> <span class="dv">60</span><span class="sc">^</span><span class="dv">2</span> <span class="sc">*</span> <span class="dv">24</span> <span class="sc">*</span> <span class="dv">365</span></span>
+<span id="cb30-3"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-4"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># transform in Km</span></span>
+<span id="cb30-5"><a href="" aria-hidden="true" tabindex="-1"></a>hubble.const <span class="ot">&lt;-</span> posterior_samples<span class="sc">$</span>beta<span class="sc">/</span> mpc_km </span>
+<span id="cb30-6"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-7"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># invert to get age in seconds</span></span>
+<span id="cb30-8"><a href="" aria-hidden="true" tabindex="-1"></a>age <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">/</span>hubble.const</span>
+<span id="cb30-9"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-10"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># transform age in billion years</span></span>
+<span id="cb30-11"><a href="" aria-hidden="true" tabindex="-1"></a>age <span class="ot">&lt;-</span> (age<span class="sc">/</span>sec_per_year) <span class="sc">/</span> <span class="dv">10</span><span class="sc">^</span><span class="dv">9</span></span>
+<span id="cb30-12"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-13"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># point estimate</span></span>
+<span id="cb30-14"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">mean</span>(age)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 12.83895</code></pre>
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># 95% Bayesian credible interval</span></span>
-<span id="cb28-2"><a href="" aria-hidden="true" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> <span class="fl">0.05</span></span>
-<span id="cb28-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">c</span>(<span class="fu">quantile</span>(age, <span class="at">probs =</span> alpha<span class="sc">/</span><span class="dv">2</span>),</span>
-<span id="cb28-4"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="fu">quantile</span>(age, <span class="at">probs =</span> <span class="dv">1</span><span class="sc">-</span>alpha<span class="sc">/</span><span class="dv">2</span>)),</span>
-<span id="cb28-5"><a href="" aria-hidden="true" tabindex="-1"></a>      <span class="at">digits=</span><span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># 95% Bayesian credible interval</span></span>
+<span id="cb32-2"><a href="" aria-hidden="true" tabindex="-1"></a>alpha <span class="ot">&lt;-</span> <span class="fl">0.05</span></span>
+<span id="cb32-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">round</span>(<span class="fu">c</span>(<span class="fu">quantile</span>(age, <span class="at">probs =</span> alpha<span class="sc">/</span><span class="dv">2</span>),</span>
+<span id="cb32-4"><a href="" aria-hidden="true" tabindex="-1"></a>        <span class="fu">quantile</span>(age, <span class="at">probs =</span> <span class="dv">1</span><span class="sc">-</span>alpha<span class="sc">/</span><span class="dv">2</span>)),</span>
+<span id="cb32-5"><a href="" aria-hidden="true" tabindex="-1"></a>      <span class="at">digits=</span><span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code> 2.5% 97.5% 
 11.55 14.34 </code></pre>
@@ -1034,7 +1032,7 @@ convergence, Rhat=1).</code></pre>
 <h2>Visualising uncertainty</h2>
 <p>Posterior distribution for the estimated age of the universe</p>
 <div class="cell" data-layout-align="center">
-<div class="sourceCode cell-code" id="cb30" data-cap-location="margin"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(age, <span class="at">breaks =</span><span class="dv">30</span>, <span class="at">xlab=</span><span class="st">"time (billions of years)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb34" data-cap-location="margin"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(age, <span class="at">breaks =</span><span class="dv">30</span>, <span class="at">xlab=</span><span class="st">"time (billions of years)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure>
@@ -1048,15 +1046,15 @@ convergence, Rhat=1).</code></pre>
 <h2>Visualising uncertainty</h2>
 <p>Each posterior sample correspond to a set of parameter values</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(d<span class="sc">$</span>distance, d<span class="sc">$</span>velocity, <span class="at">xlab =</span> <span class="st">"Distance (Mpc)"</span>, <span class="at">ylab =</span> <span class="st">"Velocity (km/s)"</span>)</span>
-<span id="cb31-2"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># draw 500 samples from posterior</span></span>
-<span id="cb31-4"><a href="" aria-hidden="true" tabindex="-1"></a>idx <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">seq_along</span>(posterior_samples<span class="sc">$</span>beta), <span class="dv">500</span>)</span>
-<span id="cb31-5"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-6"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> idx){</span>
-<span id="cb31-7"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">abline</span>(<span class="at">a =</span> <span class="dv">0</span>, <span class="at">b =</span> posterior_samples<span class="sc">$</span>beta[i], <span class="at">lwd =</span> <span class="dv">1</span>, <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">1</span>,<span class="fl">0.08</span>))</span>
-<span id="cb31-8"><a href="" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb31-9"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">a =</span> <span class="dv">0</span>, <span class="at">b =</span> <span class="fu">median</span>(posterior_samples<span class="sc">$</span>beta), <span class="at">lwd =</span> <span class="dv">3</span>, <span class="at">col =</span> <span class="st">"blue"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(d<span class="sc">$</span>distance, d<span class="sc">$</span>velocity, <span class="at">xlab =</span> <span class="st">"Distance (Mpc)"</span>, <span class="at">ylab =</span> <span class="st">"Velocity (km/s)"</span>)</span>
+<span id="cb35-2"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-3"><a href="" aria-hidden="true" tabindex="-1"></a><span class="co"># draw 500 samples from posterior</span></span>
+<span id="cb35-4"><a href="" aria-hidden="true" tabindex="-1"></a>idx <span class="ot">&lt;-</span> <span class="fu">sample</span>(<span class="fu">seq_along</span>(posterior_samples<span class="sc">$</span>beta), <span class="dv">500</span>)</span>
+<span id="cb35-5"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-6"><a href="" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> idx){</span>
+<span id="cb35-7"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="fu">abline</span>(<span class="at">a =</span> <span class="dv">0</span>, <span class="at">b =</span> posterior_samples<span class="sc">$</span>beta[i], <span class="at">lwd =</span> <span class="dv">1</span>, <span class="at">col =</span> <span class="fu">rgb</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">1</span>,<span class="fl">0.08</span>))</span>
+<span id="cb35-8"><a href="" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb35-9"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">abline</span>(<span class="at">a =</span> <span class="dv">0</span>, <span class="at">b =</span> <span class="fu">median</span>(posterior_samples<span class="sc">$</span>beta), <span class="at">lwd =</span> <span class="dv">3</span>, <span class="at">col =</span> <span class="st">"blue"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell" data-layout-align="center">
 <div class="cell-output-display">
@@ -1209,8 +1207,8 @@ y_i \sim \text{Poisson} \left(\lambda_i \right)
 <li><p>Two viewing conditions varied the dots’ <strong>blur/size &amp; luminance</strong>. <strong>Question:</strong> how does <strong>precision</strong> (steepness of the choice curve) change across conditions?</p></li>
 </ul>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="st">"data/bisection2.txt"</span>, <span class="at">sep=</span><span class="st">"</span><span class="sc">\t</span><span class="st">"</span>,<span class="at">header=</span>T)</span>
-<span id="cb32-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="" aria-hidden="true" tabindex="-1"></a>d <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="st">"data/bisection2.txt"</span>, <span class="at">sep=</span><span class="st">"</span><span class="sc">\t</span><span class="st">"</span>,<span class="at">header=</span>T)</span>
+<span id="cb36-2"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(d)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>'data.frame':   4593 obs. of  5 variables:
  $ id  : int  4 4 4 4 4 4 4 4 4 4 ...
@@ -1266,7 +1264,7 @@ b \sim \mathcal{N}\left( 0, \Omega \right)
 </div>
 <div class="fragment">
 <div class="cell">
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">pbeta</span>(<span class="fl">0.1</span>, <span class="dv">1</span>, <span class="dv">7</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="fu">pbeta</span>(<span class="fl">0.1</span>, <span class="dv">1</span>, <span class="dv">7</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 0.5217031</code></pre>
 </div>
@@ -1275,48 +1273,48 @@ b \sim \mathcal{N}\left( 0, \Omega \right)
 </section>
 <section id="example-3-lapse-augmented-probit-glmm-4" class="slide level2 scrollable">
 <h2>Example 3: Lapse-augmented probit GLMM</h2>
-<div class="sourceCode" id="cb36"><pre class="sourceCode stan code-with-copy"><code class="sourceCode stan"><span id="cb36-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> {</span>
-<span id="cb36-2"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span>&lt;<span class="kw">lower</span>=<span class="dv">1</span>&gt; N;</span>
-<span id="cb36-3"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">array</span>[N] <span class="dt">int</span>&lt;<span class="kw">lower</span>=<span class="dv">0</span>, <span class="kw">upper</span>=<span class="dv">1</span>&gt; rr;</span>
-<span id="cb36-4"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">array</span>[N] <span class="dt">real</span> ds;</span>
-<span id="cb36-5"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">array</span>[N] <span class="dt">int</span>&lt;<span class="kw">lower</span>=<span class="dv">0</span>,<span class="kw">upper</span>=<span class="dv">1</span>&gt; cond;</span>
-<span id="cb36-6"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span>&lt;<span class="kw">lower</span>=<span class="dv">1</span>&gt; J;</span>
-<span id="cb36-7"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">array</span>[N] <span class="dt">int</span>&lt;<span class="kw">lower</span>=<span class="dv">1</span>,<span class="kw">upper</span>=J&gt; id;</span>
-<span id="cb36-8"><a href="" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb36-9"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-10"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">parameters</span> {</span>
-<span id="cb36-11"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">vector</span>[<span class="dv">4</span>] beta;                    <span class="co">// fixed-effects parameters</span></span>
-<span id="cb36-12"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">vector</span>&lt;<span class="kw">lower</span>=<span class="dv">0</span>,<span class="kw">upper</span>=<span class="dv">1</span>&gt;[J] lambda; <span class="co">// lapse rate</span></span>
-<span id="cb36-13"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">vector</span>&lt;<span class="kw">lower</span>=<span class="dv">0</span>&gt;[<span class="dv">4</span>] sigma_u;        <span class="co">// random effects standard deviations</span></span>
-<span id="cb36-14"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">cholesky_factor_corr</span>[<span class="dv">4</span>] L_u;       <span class="co">// L_u is the Choleski factor of the correlation matrix</span></span>
-<span id="cb36-15"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">matrix</span>[<span class="dv">4</span>,J] z_u;                   <span class="co">// random effect matrix</span></span>
-<span id="cb36-16"><a href="" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb36-17"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-18"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">transformed parameters</span> {</span>
-<span id="cb36-19"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">matrix</span>[<span class="dv">4</span>,J] u;</span>
-<span id="cb36-20"><a href="" aria-hidden="true" tabindex="-1"></a>  u = diag_pre_multiply(sigma_u, L_u) * z_u; <span class="co">// use Cholesky to set correlation</span></span>
-<span id="cb36-21"><a href="" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb36-22"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-23"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">model</span> {</span>
-<span id="cb36-24"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">real</span> mu; <span class="co">// linear predictor</span></span>
-<span id="cb36-25"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-26"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="co">//priors</span></span>
-<span id="cb36-27"><a href="" aria-hidden="true" tabindex="-1"></a>  L_u ~ lkj_corr_cholesky(<span class="dv">2</span>);   <span class="co">// LKJ prior for the correlation matrix</span></span>
-<span id="cb36-28"><a href="" aria-hidden="true" tabindex="-1"></a>  to_vector(z_u) ~ normal(<span class="dv">0</span>,<span class="dv">1</span>); <span class="co">// before Cholesky, random effects are normal variates with SD=1</span></span>
-<span id="cb36-29"><a href="" aria-hidden="true" tabindex="-1"></a>  sigma_u ~ cauchy(<span class="dv">0</span>, <span class="dv">1</span>);       <span class="co">// SD of random effects (vectorized)</span></span>
-<span id="cb36-30"><a href="" aria-hidden="true" tabindex="-1"></a>  beta ~ normal(<span class="dv">0</span>, <span class="dv">2</span>);          <span class="co">// prior </span></span>
-<span id="cb36-31"><a href="" aria-hidden="true" tabindex="-1"></a>  lambda ~ beta(<span class="dv">1</span>, <span class="dv">7</span>);          <span class="co">// lapse rate ~50% prior that &lt;0.1, pbeta(0.1, 1, 7)</span></span>
-<span id="cb36-32"><a href="" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb36-33"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="co">//likelihood</span></span>
-<span id="cb36-34"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span>:N){</span>
-<span id="cb36-35"><a href="" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb36-36"><a href="" aria-hidden="true" tabindex="-1"></a>    mu = beta[<span class="dv">1</span>] + u[<span class="dv">1</span>,id[i]] + </span>
-<span id="cb36-37"><a href="" aria-hidden="true" tabindex="-1"></a>      cond[i]*(beta[<span class="dv">2</span>]+u[<span class="dv">2</span>,id[i]]) + </span>
-<span id="cb36-38"><a href="" aria-hidden="true" tabindex="-1"></a>      (beta[<span class="dv">3</span>] + u[<span class="dv">3</span>,id[i]] + cond[i]*(beta[<span class="dv">4</span>] + u[<span class="dv">4</span>,id[i]] ))*ds[i];</span>
-<span id="cb36-39"><a href="" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb36-40"><a href="" aria-hidden="true" tabindex="-1"></a>    rr[i] ~ bernoulli((<span class="dv">1</span>-lambda[id[i]])*Phi(mu)+lambda[id[i]]/<span class="dv">2</span>);</span>
-<span id="cb36-41"><a href="" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb36-42"><a href="" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode" id="cb40"><pre class="sourceCode stan code-with-copy"><code class="sourceCode stan"><span id="cb40-1"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">data</span> {</span>
+<span id="cb40-2"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span>&lt;<span class="kw">lower</span>=<span class="dv">1</span>&gt; N;</span>
+<span id="cb40-3"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">array</span>[N] <span class="dt">int</span>&lt;<span class="kw">lower</span>=<span class="dv">0</span>, <span class="kw">upper</span>=<span class="dv">1</span>&gt; rr;</span>
+<span id="cb40-4"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">array</span>[N] <span class="dt">real</span> ds;</span>
+<span id="cb40-5"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">array</span>[N] <span class="dt">int</span>&lt;<span class="kw">lower</span>=<span class="dv">0</span>,<span class="kw">upper</span>=<span class="dv">1</span>&gt; cond;</span>
+<span id="cb40-6"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">int</span>&lt;<span class="kw">lower</span>=<span class="dv">1</span>&gt; J;</span>
+<span id="cb40-7"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">array</span>[N] <span class="dt">int</span>&lt;<span class="kw">lower</span>=<span class="dv">1</span>,<span class="kw">upper</span>=J&gt; id;</span>
+<span id="cb40-8"><a href="" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb40-9"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-10"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">parameters</span> {</span>
+<span id="cb40-11"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">vector</span>[<span class="dv">4</span>] beta;                    <span class="co">// fixed-effects parameters</span></span>
+<span id="cb40-12"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">vector</span>&lt;<span class="kw">lower</span>=<span class="dv">0</span>,<span class="kw">upper</span>=<span class="dv">1</span>&gt;[J] lambda; <span class="co">// lapse rate</span></span>
+<span id="cb40-13"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">vector</span>&lt;<span class="kw">lower</span>=<span class="dv">0</span>&gt;[<span class="dv">4</span>] sigma_u;        <span class="co">// random effects standard deviations</span></span>
+<span id="cb40-14"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">cholesky_factor_corr</span>[<span class="dv">4</span>] L_u;       <span class="co">// L_u is the Choleski factor of the correlation matrix</span></span>
+<span id="cb40-15"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">matrix</span>[<span class="dv">4</span>,J] z_u;                   <span class="co">// random effect matrix</span></span>
+<span id="cb40-16"><a href="" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb40-17"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-18"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">transformed parameters</span> {</span>
+<span id="cb40-19"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">matrix</span>[<span class="dv">4</span>,J] u;</span>
+<span id="cb40-20"><a href="" aria-hidden="true" tabindex="-1"></a>  u = diag_pre_multiply(sigma_u, L_u) * z_u; <span class="co">// use Cholesky to set correlation</span></span>
+<span id="cb40-21"><a href="" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb40-22"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-23"><a href="" aria-hidden="true" tabindex="-1"></a><span class="kw">model</span> {</span>
+<span id="cb40-24"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="dt">real</span> mu; <span class="co">// linear predictor</span></span>
+<span id="cb40-25"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-26"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="co">//priors</span></span>
+<span id="cb40-27"><a href="" aria-hidden="true" tabindex="-1"></a>  L_u ~ lkj_corr_cholesky(<span class="dv">2</span>);   <span class="co">// LKJ prior for the correlation matrix</span></span>
+<span id="cb40-28"><a href="" aria-hidden="true" tabindex="-1"></a>  to_vector(z_u) ~ normal(<span class="dv">0</span>,<span class="dv">1</span>); <span class="co">// before Cholesky, random effects are normal variates with SD=1</span></span>
+<span id="cb40-29"><a href="" aria-hidden="true" tabindex="-1"></a>  sigma_u ~ cauchy(<span class="dv">0</span>, <span class="dv">1</span>);       <span class="co">// SD of random effects (vectorized)</span></span>
+<span id="cb40-30"><a href="" aria-hidden="true" tabindex="-1"></a>  beta ~ normal(<span class="dv">0</span>, <span class="dv">2</span>);          <span class="co">// prior </span></span>
+<span id="cb40-31"><a href="" aria-hidden="true" tabindex="-1"></a>  lambda ~ beta(<span class="dv">1</span>, <span class="dv">7</span>);          <span class="co">// lapse rate ~50% prior that &lt;0.1, pbeta(0.1, 1, 7)</span></span>
+<span id="cb40-32"><a href="" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-33"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="co">//likelihood</span></span>
+<span id="cb40-34"><a href="" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span>:N){</span>
+<span id="cb40-35"><a href="" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb40-36"><a href="" aria-hidden="true" tabindex="-1"></a>    mu = beta[<span class="dv">1</span>] + u[<span class="dv">1</span>,id[i]] + </span>
+<span id="cb40-37"><a href="" aria-hidden="true" tabindex="-1"></a>      cond[i]*(beta[<span class="dv">2</span>]+u[<span class="dv">2</span>,id[i]]) + </span>
+<span id="cb40-38"><a href="" aria-hidden="true" tabindex="-1"></a>      (beta[<span class="dv">3</span>] + u[<span class="dv">3</span>,id[i]] + cond[i]*(beta[<span class="dv">4</span>] + u[<span class="dv">4</span>,id[i]] ))*ds[i];</span>
+<span id="cb40-39"><a href="" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb40-40"><a href="" aria-hidden="true" tabindex="-1"></a>    rr[i] ~ bernoulli((<span class="dv">1</span>-lambda[id[i]])*Phi(mu)+lambda[id[i]]/<span class="dv">2</span>);</span>
+<span id="cb40-41"><a href="" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb40-42"><a href="" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </section>
 <section id="priors" class="slide level2">
 <h2>Priors</h2>
@@ -1402,7 +1400,7 @@ b \sim \mathcal{N}\left( 0, \Omega \right)
 <div class="quarto-auto-generated-content">
 <p><img src="img/logo-small-london-cmyk.jpg" class="slide-logo"></p>
 <div class="footer footer-default">
-<p>#StandWithUkraine</p>
+
 </div>
 </div>
 </section></section>

@@ -1,5 +1,5 @@
 ---
-title: "Building and Customising Statistical Models with Stan and R: An Introduction to Bayesian Inference<br> Worksheet"
+title: "PGR Training: Bayesian modelling in R and Stan<br> Worksheet"
 author: "Matteo Lisi"
 format:
   html:
@@ -35,6 +35,8 @@ library(lme4)
 # Packages used here
 library(lme4) # for the sleepstudy data
 
+# alternatively, if your don't have lme4 installed
+sleepstudy <- read.csv("data/sleepstudy.csv")
 
 # Pick example subject and plot their data
 par(mfrow = c(1,1))

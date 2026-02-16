@@ -1,13 +1,10 @@
 ---
-title: "Building and Customising Statistical Models with Stan and R: An Introduction to Bayesian Inference"
-subtitle: "<br>_Workshops for Ukraine_<br>"
+title: "Bayesian modelling in R and Stan"
+subtitle: "<br>_PGR Training 18 Feb 2026_<br>"
 author: "Matteo Lisi"
-date-released: 2025-11-13
-url: https://github.com/mattelisi/SDT-workshop
 format:
   revealjs:
     logo: img/logo-small-london-cmyk.jpg
-    footer: "#StandWithUkraine"
     incremental: true  
     auto-stretch: false
     code-fold: false   # don’t fold
@@ -137,36 +134,6 @@ par_dark_slide <- function(
 ```
 
 
-##  {class="small-font"}
-
-
-
-:::::::::::: columns
-::: {.column width="60%"}
-
-![from 'Statistical rethinking', Richard McElreath](img/test_map.png){fig-align="center" width="90%"}
-
-:::
-
-::: {.column width="40%"}
-
-
-![](img/meme_leaving.png){fig-align="center" width="90%"}
-
-
-:::
-
-::::::::::::
-
-
-:::: fragment
-
-![https://mc-stan.org/](img/logo_stan.png){fig-align="center" width="10%"}
-
-::::
-
----
-
 ## Outline
 
 ::: nonincremental
@@ -177,7 +144,7 @@ par_dark_slide <- function(
 
     - Linear regression
     - Overdispersed Poisson GLMM
-    - Lapse-augmented probit GLMM.
+    - Multilevel psychometric function with lapses
   
 5. Priors
 6. Bayes factors
@@ -677,6 +644,57 @@ round(c(quantile(slope_samples, probs = alpha/2),
       digits=2)
 ```
 
+## Bayesian inference after MCMC: it’s just counting {.scrollable}
+
+Once we have posterior samples $\{\beta_1 ^{(1)}, \beta_1 ^{(2)}, \dots, \beta_1 ^{(S)}\}$ any probability statement becomes a simple proportion of samples.
+
+ 
+
+::: fragment
+
+**95% credible interval** → Middle 95% of sampled values.
+
+```r
+quantile(slope_samples, probs = c(0.025, 0.975))
+```
+
+:::
+
+ 
+
+::: fragment
+
+**Probability the slope is positive** → $p(\beta_1 > 0 \mid \text{data})$
+
+```r
+mean(slope_samples > 0)
+```
+
+:::
+
+ 
+
+::: fragment
+
+**Probability the slope lies in a meaningful range** → $p(0 < \beta_1 < 5 \mid \text{data})$
+
+```r
+mean(slope_samples > 0 & slope_samples < 5)
+```
+
+:::
+
+ 
+
+::: fragment
+
+**Probability the slope exceeds a threshold** → $p(\beta_1 > 10 \mid \text{data})$
+
+```r
+mean(slope_samples > 10)
+```
+
+:::
 
 ## MCMC sampling
 
