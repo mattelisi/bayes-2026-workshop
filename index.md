@@ -1,8 +1,8 @@
-# PGR traiing: Bayesian modelling in R (18 Feb 2026)
+# PGR training: Bayesian modelling in R (18 Feb 2026)
 
 - [**Slides (HTML)**](slides.html)
 - [**Worksheet (HTML)**](worksheet.html)
-- [**Source code & data (GitHub)**](https://github.com/mattelisi/bayes-workshop)
+- [**Source code & data (GitHub)**](https://github.com/mattelisi/bayes-2026-workshop)
 
 (R packages used in the workshop: `rstan`, `tidyverse`, `tidybayes`.)
 
